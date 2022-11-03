@@ -1,9 +1,10 @@
 # LIBRARY IMPORTS
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
 
 
-# Create your models here.
+# STREAM PLATFORM
 class StreamPlatform(models.Model):
     name = models.CharField(max_length=30)
     about = models.CharField(max_length=150)
@@ -13,6 +14,7 @@ class StreamPlatform(models.Model):
         return self.name
 
 
+# WATCH LIST
 class WatchList(models.Model):
     title = models.CharField(max_length=50)
     storyline = models.CharField(max_length=200)
@@ -23,8 +25,10 @@ class WatchList(models.Model):
     def __str__(self):
         return self.title
     
-    
+
+# REVIEW
 class Review(models.Model):
+    review_user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.PositiveBigIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     description = models.CharField(max_length=200, null=True)
     watchlist = models.ForeignKey(WatchList, on_delete=models.CASCADE, related_name="reviews")

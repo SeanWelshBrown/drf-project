@@ -1,16 +1,19 @@
 # LIBRARY IMPORTS
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from django.contrib.auth.models import User
 
 # APP IMPORTS
+from watchlist_app.api.permissions import AdminOrReadOnly, ReviewUserOrReadOnly
 from watchlist_app.models import WatchList, StreamPlatform, Review
-from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
-
+from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer, UserSerializer
 
 
 # STREAM PLATFORM VIEWS
-class StreamPlatform(viewsets.ModelViewSet):
+class StreamPlatformVS(viewsets.ModelViewSet):
     queryset = StreamPlatform.objects.all()
     serializer_class = StreamPlatformSerializer
     
@@ -20,37 +23,53 @@ class StreamPlatform(viewsets.ModelViewSet):
         return Response(names)
 
 
-# WATCH LIST VIEWS
-class WatchList(viewsets.ModelViewSet):
+# WATCHLIST VIEWS
+class WatchListVS(viewsets.ModelViewSet):
     queryset = WatchList.objects.all()
     serializer_class = WatchListSerializer
     
-    def get_serializer_class(self):
-        if self.action == "watchlist_reviews" or self.action == "create_review":
-            return ReviewSerializer
-        else:
-            return self.serializer_class
-        
-    
-    @action(url_path='reviews', detail=True)
+
+    @action(url_path='reviews', 
+            detail=True,)
     def watchlist_reviews(self, request, pk=None):
         watchlist = self.get_object()
-        serializer = self.get_serializer(watchlist.reviews, many=True, context={'request': request})
+        serializer = ReviewSerializer(watchlist.reviews, many=True, context={'request': request})
         return Response(serializer.data)
-    
-    @action(url_path='create-review', methods=["POST"], detail=True)
+
+    @action(url_path='create-review', 
+            detail=True, 
+            methods=['post'], 
+            serializer_class=ReviewSerializer,
+            permission_classes=[IsAuthenticated])
     def create_review(self, request, pk=None):
         watchlist = self.get_object()
-        serializer = self.get_serializer(data=request.data, context={'request': request})
+        user = self.request.user
+        review_queryset = Review.objects.filter(watchlist=watchlist, review_user=user)
+        
+        if review_queryset.exists():
+            raise ValidationError("You have already reviewed this item!")
+        
+        serializer = ReviewSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(watchlist=watchlist)
+            serializer.save(watchlist=watchlist, review_user=user)
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
-        
-    
+
+
 # REVIEW VIEWS
-class Review(viewsets.ReadOnlyModelViewSet):
+class ReviewVS(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    
+    http_method_names = ['get', 'put', 'patch', 'delete', 'options', 'head']
+      
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            self.permission_classes = [ReviewUserOrReadOnly | AdminOrReadOnly]
+        return [permission() for permission in self.permission_classes]
+
+
+# USER VIEWS
+class UserVS(viewsets.ReadOnlyModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
