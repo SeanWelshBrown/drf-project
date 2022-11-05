@@ -16,7 +16,7 @@ from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSer
 class StreamPlatformVS(viewsets.ModelViewSet):
     queryset = StreamPlatform.objects.all()
     serializer_class = StreamPlatformSerializer
-    
+
     @action(url_path='names', detail=False)
     def stream_platform_names(self, request):
         names = StreamPlatform.objects.all().values_list('name', flat=True)
@@ -27,30 +27,41 @@ class StreamPlatformVS(viewsets.ModelViewSet):
 class WatchListVS(viewsets.ModelViewSet):
     queryset = WatchList.objects.all()
     serializer_class = WatchListSerializer
-    
 
-    @action(url_path='reviews', 
-            detail=True,)
+
+    @action(url_path='reviews',
+            detail=True,
+            permission_classes=[IsAuthenticated])
     def watchlist_reviews(self, request, pk=None):
         watchlist = self.get_object()
         serializer = ReviewSerializer(watchlist.reviews, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(url_path='create-review', 
-            detail=True, 
-            methods=['post'], 
+
+    @action(url_path='create-review',
+            detail=True,
+            methods=['post'],
             serializer_class=ReviewSerializer,
             permission_classes=[IsAuthenticated])
     def create_review(self, request, pk=None):
+        serializer = ReviewSerializer(data=request.data, context={'request': request})
+
         watchlist = self.get_object()
         user = self.request.user
         review_queryset = Review.objects.filter(watchlist=watchlist, review_user=user)
-        
+
         if review_queryset.exists():
             raise ValidationError("You have already reviewed this item!")
-        
-        serializer = ReviewSerializer(data=request.data, context={'request': request})
+
         if serializer.is_valid():
+            if watchlist.avg_rating == 0:
+                watchlist.avg_rating = serializer.validated_data['rating']
+            else:
+                watchlist.avg_rating = (watchlist.avg_rating + serializer.validated_data['rating']) / 2
+
+            watchlist.num_ratings = watchlist.num_ratings + 1
+            watchlist.save()
+
             serializer.save(watchlist=watchlist, review_user=user)
             return Response(serializer.data)
         else:
@@ -62,10 +73,10 @@ class ReviewVS(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     http_method_names = ['get', 'put', 'patch', 'delete', 'options', 'head']
-      
+
     def get_permissions(self):
-        if self.action == 'retrieve':
-            self.permission_classes = [ReviewUserOrReadOnly | AdminOrReadOnly]
+        if self.action in ['update', 'partial_update']:
+            self.permission_classes = [ReviewUserOrReadOnly]
         return [permission() for permission in self.permission_classes]
 
 
