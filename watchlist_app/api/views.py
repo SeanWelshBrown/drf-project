@@ -75,7 +75,7 @@ class ReviewVS(viewsets.ModelViewSet):
     http_method_names = ['get', 'put', 'patch', 'delete', 'options', 'head']
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update']:
+        if self.action in ['update', 'partial_update', 'destroy']:
             self.permission_classes = [ReviewUserOrReadOnly]
         return [permission() for permission in self.permission_classes]
 
