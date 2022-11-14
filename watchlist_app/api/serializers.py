@@ -18,7 +18,16 @@ class ReviewSerializer(serializers.HyperlinkedModelSerializer):
 # WATCHLISTS
 class WatchListSerializer(serializers.HyperlinkedModelSerializer):
     reviews = ReviewSerializer(many=True, read_only=True)
-    
+
+    class Meta:
+        model = WatchList
+        fields = "__all__"
+
+
+class CreateWatchListSerializer(serializers.ModelSerializer):
+    """
+    Create WatchList with StreamPlatform ID instead of Hyperlinked URL
+    """
     class Meta:
         model = WatchList
         fields = "__all__"
