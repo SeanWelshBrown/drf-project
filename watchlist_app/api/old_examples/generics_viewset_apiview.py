@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework import status, generics, viewsets
 
 # APP IMPORTS
-from watchlist_app.models import WatchList, StreamPlatform, Review
+from watchlist_app.api.models import WatchList, StreamPlatform, Review
 from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 
 

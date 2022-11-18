@@ -11,7 +11,7 @@ from watchlist_app.api.permissions import (
         IsAdminOrReadOnly, 
         IsReviewUserOrReadOnly
         )
-from watchlist_app.models import (
+from watchlist_app.api.models import (
         WatchList, 
         StreamPlatform, 
         Review

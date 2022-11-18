@@ -4,7 +4,7 @@ from rest_framework.reverse import reverse
 from django.contrib.auth.models import User
 
 # APP IMPORTS
-from watchlist_app.models import (
+from watchlist_app.api.models import (
         WatchList, 
         StreamPlatform, 
         Review
