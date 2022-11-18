@@ -3,13 +3,26 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 
 # APP IMPORTS
-from watchlist_app.api.permissions import IsAdminOrReadOnly, IsReviewUserOrReadOnly
-from watchlist_app.models import WatchList, StreamPlatform, Review
-from watchlist_app.api.serializers import WatchListSerializer, CreateWatchListSerializer, StreamPlatformSerializer, ReviewSerializer, UserSerializer
+from watchlist_app.api.permissions import (
+        IsAdminOrReadOnly, 
+        IsReviewUserOrReadOnly
+        )
+from watchlist_app.models import (
+        WatchList, 
+        StreamPlatform, 
+        Review
+        )
+from watchlist_app.api.serializers import (
+        WatchListSerializer, 
+        # CreateWatchListSerializer, 
+        StreamPlatformSerializer, 
+        ReviewSerializer, 
+        UserSerializer
+        )
 
 
 # STREAM PLATFORM VIEWS
@@ -32,15 +45,15 @@ class WatchListVS(viewsets.ModelViewSet):
     queryset = WatchList.objects.all()
 
     def get_serializer_class(self):
-        if self.action == 'create':
-            return CreateWatchListSerializer
-        elif self.action in ['reviews', 'create_review']:
+        # if self.action == 'create':
+        #     return CreateWatchListSerializer
+        if self.action in ['reviews', 'create_review']:
             return ReviewSerializer
         else:
             return WatchListSerializer
 
     def get_permissions(self):
-        if self.action == 'create_review':
+        if self.action in ['create_review', 'watchlist_reviews']:
             self.permission_classes = [IsAuthenticated]
         else:
             self.permission_classes = [IsAdminOrReadOnly]

@@ -13,7 +13,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         }
 
     def save(self):
-
         password = self.validated_data['password']
         password2 = self.validated_data['password2']
 

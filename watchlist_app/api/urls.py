@@ -3,7 +3,12 @@ from django.urls import path, include
 from rest_framework import routers
 
 # APP IMPORTS
-from watchlist_app.api.views import StreamPlatformVS, WatchListVS, ReviewVS, UserVS
+from watchlist_app.api.views import (
+        StreamPlatformVS, 
+        WatchListVS, 
+        ReviewVS, 
+        UserVS
+        )
 
 
 router = routers.DefaultRouter()
